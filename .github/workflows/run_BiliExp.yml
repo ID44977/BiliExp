@@ -2,7 +2,7 @@ name: 'run BiliExp'
 
 on:
   schedule:
-    - cron: '0 4 * * *' #中午12:00执行，修改时注意时区
+    - cron: '*/10 0-17 * * *'
   watch:
     types: started
   workflow_dispatch:
@@ -10,23 +10,22 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    if: github.repository != 'happy888888/BiliExp' || github.event_name == 'workflow_dispatch'
+
     steps:
     - uses: actions/checkout@v2
       with: 
-        repository: ${{ secrets.REPOSITORY }}
-        ref: ${{ secrets.REF }}
+        ref: BiliExp-Actions
 
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/run_in_Actions/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: 执行BiliExp
-      run: bash ./run_in_Actions/run_BiliExp.sh
+    - name: 安装依赖库
+      run: |
+          sudo -H pip3 install --upgrade setuptools
+          sudo -H pip3 install -r requirements.txt
+    - name: 配置用户信息
+      run: python3 secrets2config.py
       env:
           ADVCONFIG: ${{ secrets.ADVCONFIG }}
           BILICONFIG: ${{ secrets.BILICONFIG }}
           PUSH_MESSAGE: ${{ secrets.PUSH_MESSAGE }}
+
+    - name: 执行BiliExp.py
+      run: python3 BiliExp.py
